@@ -418,4 +418,3 @@ GRANT SELECT ON Torneo_Interfacultades.facultad TO 'planillero_torneo'@'%';
 GRANT SELECT ON Torneo_Interfacultades.arbitro TO 'planillero_torneo'@'%';
 GRANT SELECT ON Torneo_Interfacultades.espectador TO 'planillero_torneo'@'%';
 
-
