@@ -1,9 +1,10 @@
+DROP DATABASE IF EXISTS Torneo_Interfacultades;
 CREATE DATABASE Torneo_Interfacultades CHARACTER SET utf8mb4;
 USE Torneo_Interfacultades;
 -- Creación de tablas
 CREATE TABLE login (
     correo varchar(50) primary key,
-    contraseña varchar(50) not null,
+    password_hash varchar(255) not null,
     rol varchar(20) not null,
     CHECK ( rol IN ('administrador', 'planillero') )
 );
@@ -79,6 +80,12 @@ CREATE TABLE turno (
     CHECK ( hora_inicio >= '18:00:00' AND hora_fin <= '23:00:00' ),
     CHECK ( TIME_TO_SEC(hora_fin) - TIME_TO_SEC(hora_inicio) = 3600 )
 );
+CREATE TABLE arbitro (
+    nombre varchar(50),
+    apellido varchar(50) not null,
+    ci_arbitro int primary key,
+    email varchar(50) not null unique
+);
 CREATE TABLE partido (
     id_partido int auto_increment unique,
     id_torneo int,
@@ -90,16 +97,30 @@ CREATE TABLE partido (
     nombre_cancha varchar(50) not null,
     id_complejo int not null,
     estado varchar(20) not null default 'programado',
+    ci_arbitro int not null,
     PRIMARY KEY (id_partido, id_torneo),
     CHECK ( estado IN ('programado', 'jugado', 'postergado', 'cancelado') ),
     CHECK ( id_equipo_local <> id_equipo_visitante ),
     CHECK ( numero_fecha >= 1 ),
     UNIQUE (dia, id_turno, nombre_cancha, id_complejo),
+    UNIQUE (dia, id_turno, ci_arbitro),
     FOREIGN KEY (id_torneo) REFERENCES torneo(id_torneo),
+    FOREIGN KEY (ci_arbitro) REFERENCES arbitro(ci_arbitro),
     FOREIGN KEY (id_equipo_local, id_torneo) REFERENCES equipo(id_equipo, id_torneo),
     FOREIGN KEY (id_equipo_visitante, id_torneo) REFERENCES equipo(id_equipo, id_torneo),
     FOREIGN KEY (id_turno) REFERENCES turno(id_turno),
     FOREIGN KEY (nombre_cancha, id_complejo) REFERENCES cancha(nombre_cancha, id_complejo)
+);
+CREATE TABLE espectador (
+    id_espectador int auto_increment primary key,
+    nombre varchar(50),
+    apellido varchar(50) not null,
+    ci_espectador int,
+    id_partido int not null,
+    fecha_nacimiento date,
+    tipo varchar(30) not null,
+    CHECK ( tipo IN ('facultad', 'externo') ),
+    FOREIGN KEY (id_partido) REFERENCES partido(id_partido)
 );
 CREATE TABLE planilla_partido (
     id_partido int,
@@ -160,10 +181,10 @@ INSERT INTO turno (hora_inicio, hora_fin) VALUES
 
 -- Inserciones a las tablas
 INSERT INTO facultad (nombre) VALUES
-    ('Artes y Arquitectura'),
     ('Ciencias Empresariales'),
-    ('Derecho'),
     ('Ingeniería y Tecnologías'),
+    ('Derecho'),
+    ('Artes y Arquitectura'),
     ('Salud'),
     ('Educación y Humanidades');
 
@@ -223,7 +244,7 @@ INSERT INTO equipo (nombre, id_torneo, id_facultad, ci_capitan) VALUES
     ('Empresariales FC', 1, 1, 50000001),
     ('Ingeniería United', 1, 2, 50000008),
     ('Derecho Atlético', 1, 3, 50000013),
-    ('Psicología FC', 1, 4, 50000019),
+    ('Arquitectura FC', 1, 4, 50000019),
     ('Salud Deportivo', 1, 5, 50000024),
     ('Humanas Lovers', 1, 6, 50000029);
 
@@ -255,20 +276,32 @@ INSERT INTO cancha (nombre_cancha, id_complejo, superficie, techada) VALUES
     ('Cancha 002', 2, 'parquet', true),
     ('Cancha 001', 3, 'sintético', false);
 
-INSERT INTO partido (id_partido, id_torneo, numero_fecha, id_equipo_local, id_equipo_visitante,
-                     dia, id_turno, nombre_cancha, id_complejo, estado) VALUES
-    (1, 1, 1, 1, 6, '2026-10-06', 1, 'Cancha 001', 1, 'jugado'),
-    (2, 1, 1, 2, 5, '2026-10-06', 2, 'Cancha 001', 1, 'jugado'),
-    (3, 1, 1, 3, 4, '2026-10-06', 1, 'Cancha 001', 2, 'jugado'),
-    (4, 1, 2, 1, 5, '2026-10-13', 3, 'Cancha 001', 1, 'jugado'),
-    (5, 1, 2, 6, 4, '2026-10-13', 1, 'Cancha 002', 2, 'jugado'),
-    (6, 1, 2, 2, 3, '2026-10-13', 4, 'Cancha 001', 3, 'jugado'),
-    (7, 1, 3, 1, 4, '2026-10-20', 2, 'Cancha 002', 1, 'jugado'),
-    (8, 1, 3, 5, 3, '2026-10-20', 1, 'Cancha 001', 2, 'jugado'),
-    (9, 1, 3, 6, 2, '2026-10-20', 5, 'Cancha 001', 1, 'jugado'),
-    (10, 1, 4, 1, 3, '2026-10-27', 1, 'Cancha 001', 1, 'programado'),
-    (11, 1, 4, 4, 2, '2026-10-27', 2, 'Cancha 001', 1, 'postergado'),
-    (12, 1, 4, 5, 6, '2026-10-27', 1, 'Cancha 002', 1, 'cancelado');
+INSERT INTO arbitro (nombre, apellido, ci_arbitro, email) VALUES
+    ('Hernán', 'Ledesma', 40000001, 'h.ledesma@correo.ucu.arbitros.uy'),
+    ('Carolina', 'Viera', 40000002, 'c.viera@correo.ucu.arbitros.uy'),
+    ('Marcelo', 'Duarte', 40000003, 'm.duarte@correo.ucu.arbitros.uy');
+
+INSERT INTO partido (id_partido, id_torneo, numero_fecha, id_equipo_local, id_equipo_visitante, dia, id_turno, nombre_cancha, id_complejo, estado, ci_arbitro) VALUES
+    (1, 1, 1, 1, 6, '2026-10-06', 1, 'Cancha 001', 1, 'jugado', 40000001),
+    (2, 1, 1, 2, 5, '2026-10-06', 2, 'Cancha 001', 1, 'jugado', 40000002),
+    (3, 1, 1, 3, 4, '2026-10-06', 1, 'Cancha 001', 2, 'jugado', 40000003),
+    (4, 1, 2, 1, 5, '2026-10-13', 3, 'Cancha 001', 1, 'jugado', 40000001),
+    (5, 1, 2, 6, 4, '2026-10-13', 1, 'Cancha 002', 2, 'jugado', 40000002),
+    (6, 1, 2, 2, 3, '2026-10-13', 4, 'Cancha 001', 3, 'jugado', 40000003),
+    (7, 1, 3, 1, 4, '2026-10-20', 2, 'Cancha 002', 1, 'jugado', 40000001),
+    (8, 1, 3, 5, 3, '2026-10-20', 1, 'Cancha 001', 2, 'jugado', 40000002),
+    (9, 1, 3, 6, 2, '2026-10-20', 5, 'Cancha 001', 1, 'jugado', 40000003),
+    (10, 1, 4, 1, 3, '2026-10-27', 1, 'Cancha 001', 1, 'programado', 40000001),
+    (11, 1, 4, 4, 2, '2026-10-27', 2, 'Cancha 001', 1, 'postergado', 40000002),
+    (12, 1, 4, 5, 6, '2026-10-27', 1, 'Cancha 002', 1, 'cancelado', 40000003);
+
+INSERT INTO espectador (nombre, apellido, ci_espectador, fecha_nacimiento, tipo, id_partido) VALUES
+    ('Valeria', 'Techera', 49000001, '2003-05-14', 'facultad', 1),
+    ('Joaquín', 'Pérez', 49000002, '2001-11-02', 'facultad', 1),
+    ('Marta', 'Gómez', NULL, '1975-08-20', 'externo', 2),
+    ('Nicolás', 'Rivero', 49000003, '2004-02-27', 'facultad', 6),
+    ('Lorena', 'Mena', NULL, '1988-12-09', 'externo', 6),
+    ('Esteban', 'Cano', 49000004, '2000-07-30', 'externo', 9);
 
 INSERT INTO sancion_jugador (ci_jugador, id_torneo, motivo, numero_fecha_inicio, cantidad_fechas) VALUES
     (50000014, 1, 'roja', 3, 1),
@@ -340,13 +373,6 @@ INSERT INTO tarjeta (id_partido, ci_jugador, minuto, color) VALUES
     (9, 50000031, 30, 'amarilla'),
     (9, 30000002, 36, 'amarilla');
 
-INSERT INTO login (correo, contraseña, rol) VALUES
-    ('admin@correo.ucu.edu.uy', 'admin123', 'administrador'),
-    ('planillero@correo.ucu.edu.uy', 'planillero123', 'planillero');
-
-INSERT INTO cambios (fecha_cambio, descripcion_cambio, id_partido, correo_cambiante) VALUES
-    ('2026-10-21 10:15:00', 'Corrección del minuto de un gol (de 38 a 39)', 9, 'planillero@correo.ucu.edu.uy');
-
 -- Creación de usuarios
 CREATE USER IF NOT EXISTS 'admin_torneo'@'%' IDENTIFIED BY 'usuario1';
 CREATE USER IF NOT EXISTS 'planillero_torneo'@'%' IDENTIFIED BY 'usuario2';
@@ -364,6 +390,7 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON Torneo_Interfacultades.planilla_partido 
 GRANT SELECT, INSERT, UPDATE, DELETE ON Torneo_Interfacultades.gol  TO 'admin_torneo'@'%';
 GRANT SELECT, INSERT, UPDATE, DELETE ON Torneo_Interfacultades.tarjeta  TO 'admin_torneo'@'%';
 GRANT SELECT, INSERT, UPDATE, DELETE ON Torneo_Interfacultades.sancion_jugador  TO 'admin_torneo'@'%';
+GRANT SELECT, INSERT, UPDATE, DELETE ON Torneo_Interfacultades.arbitro TO 'admin_torneo'@'%';
 
 GRANT SELECT, INSERT, UPDATE ON Torneo_Interfacultades.partido TO 'admin_torneo'@'%';
 GRANT SELECT, INSERT, UPDATE ON Torneo_Interfacultades.login TO 'admin_torneo'@'%';
@@ -374,6 +401,7 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON Torneo_Interfacultades.planilla_partido 
 GRANT SELECT, INSERT, UPDATE, DELETE ON Torneo_Interfacultades.gol TO 'planillero_torneo'@'%';
 GRANT SELECT, INSERT, UPDATE, DELETE ON Torneo_Interfacultades.tarjeta TO 'planillero_torneo'@'%';
 GRANT SELECT, INSERT, UPDATE, DELETE ON Torneo_Interfacultades.sancion_jugador TO 'planillero_torneo'@'%';
+GRANT SELECT, INSERT, UPDATE, DELETE ON Torneo_Interfacultades.espectador TO 'admin_torneo'@'%';
 
 GRANT SELECT ON Torneo_Interfacultades.partido TO 'planillero_torneo'@'%';
 GRANT UPDATE (estado) ON Torneo_Interfacultades.partido TO 'planillero_torneo'@'%';
@@ -387,4 +415,7 @@ GRANT SELECT ON Torneo_Interfacultades.turno    TO 'planillero_torneo'@'%';
 GRANT SELECT ON Torneo_Interfacultades.cancha   TO 'planillero_torneo'@'%';
 GRANT SELECT ON Torneo_Interfacultades.complejo TO 'planillero_torneo'@'%';
 GRANT SELECT ON Torneo_Interfacultades.facultad TO 'planillero_torneo'@'%';
+GRANT SELECT ON Torneo_Interfacultades.arbitro TO 'planillero_torneo'@'%';
+GRANT SELECT ON Torneo_Interfacultades.espectador TO 'planillero_torneo'@'%';
+
 
