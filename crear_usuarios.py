@@ -52,7 +52,7 @@ def main():
 
         conexion.commit()
         print("\nPreparación de usuarios finalizada.")
-
+    
     except Exception:
         conexion.rollback()
         raise
