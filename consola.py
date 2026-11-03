@@ -5,6 +5,7 @@ from werkzeug.security import check_password_hash
 
 from conexion import conectar
 from jugadores import menu_jugadores
+from reportes import menu_reportes
 
 
 def autenticar(correo, clave):
@@ -81,12 +82,19 @@ def main():
         print(f"Rol: {usuario['rol']}")
         if usuario['rol'] == 'administrador':
             while True:
-                print('\nADMINISTRADOR\n1. Gestionar jugadores\n0. Cerrar sesión')
+                print(
+                    '\nADMINISTRADOR\n'
+                    '1. Gestionar jugadores\n'
+                    '2. Reportes\n'
+                    '0. Cerrar sesión'
+                )
                 opcion_admin = input('Elegí una opción: ').strip()
                 if opcion_admin == '0':
                     break
                 if opcion_admin == '1':
                     menu_jugadores(usuario)
+                elif opcion_admin == '2':
+                    menu_reportes()
                 else:
                     print('Opción inválida.')
         else:
