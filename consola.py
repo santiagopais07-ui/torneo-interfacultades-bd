@@ -4,6 +4,7 @@ import mysql.connector
 from werkzeug.security import check_password_hash
 
 from conexion import conectar
+from jugadores import menu_jugadores
 
 
 def autenticar(correo, clave):
@@ -78,7 +79,19 @@ def main():
         print("\nInicio de sesión correcto.")
         print(f"Usuario: {usuario['correo']}")
         print(f"Rol: {usuario['rol']}")
-        input("Presioná Enter para volver al inicio...")
+        if usuario['rol'] == 'administrador':
+            while True:
+                print('\nADMINISTRADOR\n1. Gestionar jugadores\n0. Cerrar sesión')
+                opcion_admin = input('Elegí una opción: ').strip()
+                if opcion_admin == '0':
+                    break
+                if opcion_admin == '1':
+                    menu_jugadores(usuario)
+                else:
+                    print('Opción inválida.')
+        else:
+            print('El menú de planillas todavía está pendiente de implementar.')
+            input('Presioná Enter para cerrar sesión...')
 
 
 if __name__ == "__main__":
