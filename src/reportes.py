@@ -2,7 +2,7 @@ from datetime import time, timedelta
 
 import mysql.connector
 
-from conexion import conectar
+from src.conexion import conectar
 
 
 def reporte_posiciones(cursor, id_torneo):

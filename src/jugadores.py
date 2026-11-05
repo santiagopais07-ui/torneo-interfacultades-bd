@@ -2,7 +2,7 @@ from datetime import date
 
 import mysql.connector
 
-from conexion import conectar
+from src.conexion import conectar
 
 
 TIPOS = ('grado', 'posgrado', 'docente', 'funcionario')

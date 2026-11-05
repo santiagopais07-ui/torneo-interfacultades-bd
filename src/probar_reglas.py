@@ -1,7 +1,7 @@
 from datetime import datetime
 
-from conexion import conectar
-from reglas import (
+from src.conexion import conectar
+from src.reglas import (
     validar_alta_plantel,
     validar_alta_partido,
     validar_alta_planilla,

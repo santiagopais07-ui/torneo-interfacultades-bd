@@ -1,7 +1,7 @@
 from decimal import Decimal
 
-from conexion import conectar
-from reportes import (
+from src.conexion import conectar
+from src.reportes import (
     reporte_canchas_mas_usadas,
     reporte_espectadores_por_partido,
     reporte_fair_play_por_equipo,
