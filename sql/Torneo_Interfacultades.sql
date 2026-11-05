@@ -1,3 +1,4 @@
+SET NAMES utf8mb4;
 DROP DATABASE IF EXISTS Torneo_Interfacultades;
 CREATE DATABASE Torneo_Interfacultades CHARACTER SET utf8mb4;
 USE Torneo_Interfacultades;

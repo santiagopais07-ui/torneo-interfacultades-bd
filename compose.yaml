@@ -1,0 +1,35 @@
+name: torneo-interfacultades
+services:
+  db:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: torneo_root_solo_docker
+      TZ: America/Montevideo
+    command: ["--character-set-server=utf8mb4", "--collation-server=utf8mb4_0900_ai_ci"]
+    volumes:
+      - datos_mysql:/var/lib/mysql
+      - ./sql/Torneo_Interfacultades.sql:/docker-entrypoint-initdb.d/01-torneo.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "MYSQL_PWD=$$MYSQL_ROOT_PASSWORD mysql --protocol=TCP -h 127.0.0.1 -u root -D Torneo_Interfacultades -Nse 'SELECT COUNT(*) FROM tarjeta' >/dev/null 2>&1"]
+      interval: 5s
+      timeout: 5s
+      retries: 40
+      start_period: 30s
+  app:
+    build: .
+    environment:
+      DB_HOST: db
+      DB_PORT: "3306"
+      DB_NAME: Torneo_Interfacultades
+      DB_ADMIN_USER: admin_torneo
+      DB_ADMIN_PASSWORD: usuario1
+      DB_PLANILLERO_USER: planillero_torneo
+      DB_PLANILLERO_PASSWORD: usuario2
+      TZ: America/Montevideo
+    depends_on:
+      db:
+        condition: service_healthy
+    stdin_open: true
+    tty: true
+volumes:
+  datos_mysql:
